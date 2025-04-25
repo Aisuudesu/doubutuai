@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>アップロード画像一覧</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+  <h1 class="text-xl font-bold mb-4 text-center text-pink-600">アップロードされた写真一覧</h1>
+  <div id="gallery" class="grid grid-cols-2 sm:grid-cols-3 gap-4"></div>
+
+  <script>
+    async function loadImages() {
+      try {
+        const res = await fetch('/list');
+        const files = await res.json();
+
+        const gallery = document.getElementById('gallery');
+        files.forEach(file => {
+          const img = document.createElement('img');
+          img.src = '/uploads/' + file;
+          img.alt = file;
+          img.className = 'w-full rounded shadow';
+          gallery.appendChild(img);
+        });
+      } catch (err) {
+        console.error('画像一覧の取得に失敗:', err);
+      }
+    }
+
+    loadImages();
+  </script>
+</body>
+</html>

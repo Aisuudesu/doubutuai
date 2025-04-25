@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>あなたに似てる動物AI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-pink-100 flex items-center justify-center min-h-screen px-4">
+  <div class="bg-white rounded-2xl shadow-lg p-6 text-center w-full max-w-md">
+    <h1 class="text-2xl font-bold text-pink-600 mb-2">似てる動物AI</h1>
+    <p class="text-sm text-pink-500 mb-4">カメラで撮影してAIが診断！</p>
+
+    <div class="mb-4">
+      <video id="camera" autoplay playsinline class="w-full max-w-xs h-48 rounded-md border-2 border-pink-300 mx-auto"></video>
+      <button id="captureButton" class="mt-2 bg-pink-400 hover:bg-pink-500 text-white font-bold py-2 px-4 rounded-full">写真を撮る</button>
+    </div>
+
+    <div id="previewContainer" class="hidden">
+      <p class="text-sm text-pink-500 mb-2">プレビュー:</p>
+      <img id="previewImage" class="w-48 h-48 object-cover rounded-xl mx-auto border-2 border-pink-300" />
+    </div>
+
+    <div id="resultContainer" class="mt-6 hidden">
+      <p class="text-lg text-pink-600">診断結果：あなたに似ている動物は・・・</p>
+      <img src="/uploads/sample_animal.png" class="w-40 h-40 mx-auto mt-4" />
+    </div>
+  </div>
+
+  <script>
+    const video = document.getElementById('camera');
+    const previewImage = document.getElementById('previewImage');
+    const previewContainer = document.getElementById('previewContainer');
+    const resultContainer = document.getElementById('resultContainer');
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+      .then(stream => {
+        video.srcObject = stream;
+      })
+      .catch(err => {
+        alert('カメラにアクセスできません: ' + err);
+      });
+
+    document.getElementById('captureButton').addEventListener('click', () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const imageDataUrl = canvas.toDataURL('image/jpeg');
+      previewImage.src = imageDataUrl;
+      previewContainer.classList.remove('hidden');
+      resultContainer.classList.remove('hidden');
+
+      uploadImage(imageDataUrl);
+    });
+
+    async function uploadImage(dataUrl) {
+      const blob = await (await fetch(dataUrl)).blob();
+      const formData = new FormData();
+      formData.append('image', blob, 'capture.jpg');
+
+      try {
+        const res = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!res.ok) {
+          alert('アップロードに失敗しました');
+          return;
+        }
+
+        const json = await res.json();
+        console.log('サーバーからのレスポンス:', json);
+      } catch (err) {
+        console.error('アップロードエラー:', err);
+        alert('通信エラーが発生しました');
+      }
+    }
+  </script>
+</body>
+</html>
